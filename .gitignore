@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Resultados generados automáticamente (se pueden regenerar)
+resultados/*.json
+resultados/*.csv
+resultados/*.txt
+resultados/*.png
+resultados/graficas/*.png
+
+# Pero mantener la carpeta
+!resultados/.gitkeep
