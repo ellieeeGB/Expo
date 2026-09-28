@@ -1,0 +1,77 @@
+[
+  {
+    "title": "Preparar el entorno",
+    "desc": "Una sesión de Python compartida para todo el experimento.",
+    "code": "# Importaciones necesarias\nimport random\nimport time\nimport os\nimport sys\nimport json\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom concurrent.futures import ProcessPoolExecutor\n\n%matplotlib inline\nplt.style.use('seaborn-v0_8-darkgrid')\n\nRUTA_RESULTADOS = \"resultados\"\n\n# Crear la carpeta de resultados si no existe\nos.makedirs(RUTA_RESULTADOS, exist_ok=True)\n\n# Subcarpeta para gráficas individuales\nRUTA_GRAFICAS = os.path.join(RUTA_RESULTADOS, \"graficas\")\nos.makedirs(RUTA_GRAFICAS, exist_ok=True)\n\nprint(f\"Los resultados se guardarán en: {os.path.abspath(RUTA_RESULTADOS)}\")\n\nprint(f\"Python: {sys.version.split()[0]}\")\nprint(f\"CPU lógicas visibles: {os.cpu_count()}\")\nif hasattr(os, 'sched_getaffinity'):\n    print(f\"CPU permitidas por afinidad: {len(os.sched_getaffinity(0))}\")\nfrom pathlib import Path\nquota = Path('/sys/fs/cgroup/cpu.max')\nif quota.exists():\n    print(f\"Cuota cgroup (cuota / período): {quota.read_text().strip()}\")\nprint(\"Entorno listo. La cuota de Docker puede limitar los recursos efectivos.\")\nplt.rcParams.update({'figure.facecolor':'#FFF9F0', 'axes.facecolor':'#FFFFFF',\n    'axes.prop_cycle':plt.cycler(color=['#6C63FF','#FF6584','#2CB67D']), 'font.size':13})"
+  },
+  {
+    "title": "El azar aproxima π",
+    "desc": "Lanzamos 1,000 puntos. La proporción dentro del círculo permite estimar π.",
+    "code": "# Generar pocos puntos para visualizar el método\nn = 1000\ndentro_x, dentro_y = [], []\nfuera_x, fuera_y = [], []\n\nfor _ in range(n):\n    x = random.uniform(-1, 1)\n    y = random.uniform(-1, 1)\n    if x*x + y*y <= 1:\n        dentro_x.append(x)\n        dentro_y.append(y)\n    else:\n        fuera_x.append(x)\n        fuera_y.append(y)\n\npi_estimado = 4 * len(dentro_x) / n\nprint(f\"Con {n} puntos, π estimado = {pi_estimado:.4f}\")\n\nplt.figure(figsize=(6,4.6))\nplt.scatter(dentro_x, dentro_y, color='#6C63FF', s=5, label='Dentro')\nplt.scatter(fuera_x, fuera_y, color='#FF6584', s=5, label='Fuera')\ncirculo = plt.Circle((0,0), 1, fill=False, color='blue', linewidth=2)\nplt.gca().add_patch(circulo)\nplt.axis('equal')\nplt.title(f'Monte Carlo para π (n={n})')\nplt.legend()\nplt.show()"
+  },
+  {
+    "title": "Un solo proceso",
+    "desc": "Definimos la referencia secuencial y probamos con un millón de puntos.",
+    "code": "def montecarlo_secuencial(n_puntos):\n    \"\"\"\n    Estima π usando simulación Monte Carlo de forma secuencial.\n    \n    Parámetros:\n    n_puntos (int): Número total de puntos a generar.\n    \n    Retorna:\n    float: Estimación de π.\n    \"\"\"\n    dentro_circulo = 0\n    for _ in range(n_puntos):\n        x = random.uniform(-1, 1)\n        y = random.uniform(-1, 1)\n        if x*x + y*y <= 1:\n            dentro_circulo += 1\n    return 4 * dentro_circulo / n_puntos\n\nn_prueba = 1_000_000\ninicio = time.perf_counter()\npi_estimado = montecarlo_secuencial(n_prueba)\nfin = time.perf_counter()\n\nprint(f\"Con {n_prueba:,} puntos:\")\nprint(f\"π estimado = {pi_estimado:.6f}\")\nprint(f\"Tiempo = {fin - inicio:.4f} segundos\")\nprint(f\"Error absoluto = {abs(pi_estimado - 3.141592653589793):.6f}\")"
+  },
+  {
+    "title": "Varios procesos",
+    "desc": "Cada trabajador cuenta su parte. El proceso principal reúne los conteos.",
+    "code": "import montecarlo_worker as mw\n\ndef montecarlo_paralelo(n_puntos, n_procesos):\n    \"\"\"\n    Estima π usando simulación Monte Carlo con múltiples procesos.\n    \n    Parámetros:\n    n_puntos (int): Número total de puntos.\n    n_procesos (int): Número de procesos a utilizar.\n    \n    Retorna:\n    float: Estimación de π.\n    \"\"\"\n    # Dividir el trabajo en chunks\n    chunk_size = n_puntos // n_procesos\n    resto = n_puntos % n_procesos\n    chunks = [chunk_size] * n_procesos\n    for i in range(resto):\n        chunks[i] += 1\n    \n    # Ejecutar en paralelo\n    with ProcessPoolExecutor(max_workers=n_procesos) as executor:\n        resultados = list(executor.map(mw.contar_puntos_en_circulo, chunks))\n    \n    total_dentro = sum(resultados)\n    return 4 * total_dentro / n_puntos\n\nn_prueba = 1_000_000\nn_procesos = 4\ninicio = time.perf_counter()\npi_estimado = montecarlo_paralelo(n_prueba, n_procesos)\nfin = time.perf_counter()\n\nprint(f\"Con {n_prueba:,} puntos y {n_procesos} procesos:\")\nprint(f\"π estimado = {pi_estimado:.6f}\")\nprint(f\"Tiempo = {fin - inicio:.4f} segundos\")\nprint(f\"Error absoluto = {abs(pi_estimado - 3.141592653589793):.6f}\")"
+  },
+  {
+    "title": "Diseñar la comparación",
+    "desc": "Puedes editar N_PUNTOS y REPETICIONES antes de ejecutar esta celda.",
+    "code": "from laboratorio import medir\nN_PUNTOS = 10_000_000\nREPETICIONES = 3\nPROCESOS = [1, 2, 4, 8]\nassert isinstance(N_PUNTOS, int) and N_PUNTOS > 0\nassert isinstance(REPETICIONES, int) and REPETICIONES >= 2\nmuestras = {}\nprint(f\"{N_PUNTOS:,} puntos por corrida\")\nprint(f\"{REPETICIONES} repeticiones por configuración\")\nprint(\"Ejecutaremos cada configuración por separado.\")"
+  },
+  {
+    "title": "Medir la referencia",
+    "desc": "El promedio secuencial será la base del speedup.",
+    "code": "muestras['Secuencial'] = medir(\n    montecarlo_secuencial, N_PUNTOS, None, REPETICIONES\n)"
+  },
+  {
+    "title": "Medir con 1 proceso",
+    "desc": "La medición incluye crear el pool, calcular y reunir los resultados.",
+    "code": "muestras['Paralelo 1 proc'] = medir(\n    montecarlo_paralelo, N_PUNTOS, 1, REPETICIONES\n)"
+  },
+  {
+    "title": "Medir con 2 procesos",
+    "desc": "La medición incluye crear el pool, calcular y reunir los resultados.",
+    "code": "muestras['Paralelo 2 proc'] = medir(\n    montecarlo_paralelo, N_PUNTOS, 2, REPETICIONES\n)"
+  },
+  {
+    "title": "Medir con 4 procesos",
+    "desc": "La medición incluye crear el pool, calcular y reunir los resultados.",
+    "code": "muestras['Paralelo 4 proc'] = medir(\n    montecarlo_paralelo, N_PUNTOS, 4, REPETICIONES\n)"
+  },
+  {
+    "title": "Medir con 8 procesos",
+    "desc": "La medición incluye crear el pool, calcular y reunir los resultados.",
+    "code": "muestras['Paralelo 8 proc'] = medir(\n    montecarlo_paralelo, N_PUNTOS, 8, REPETICIONES\n)"
+  },
+  {
+    "title": "Comparar los resultados",
+    "desc": "Tiempo promedio, dispersión, aceleración y eficiencia de esta sesión.",
+    "code": "df_resultados = pd.DataFrame([\n    fila for grupo in muestras.values() for fila in grupo\n])\nresumen = df_resultados.groupby(['configuracion', 'procesos'], sort=False).agg(\n    tiempo_promedio=('tiempo', 'mean'),\n    tiempo_std=('tiempo', 'std'),\n    pi_promedio=('pi', 'mean')\n).reset_index()\ntiempo_secuencial = resumen.loc[\n    resumen['configuracion'] == 'Secuencial', 'tiempo_promedio'\n].iloc[0]\nresumen['speedup'] = tiempo_secuencial / resumen['tiempo_promedio']\nresumen['eficiencia'] = resumen['speedup'] / resumen['procesos']\ndisplay(resumen[['configuracion', 'tiempo_promedio', 'tiempo_std',\n                 'speedup', 'eficiencia']].round(4))\n# Copias en el directorio de resultados del contenedor.\ndf_resultados.to_csv('resultados/resultados_completos.csv', index=False)\nresumen.to_csv('resultados/resumen.csv', index=False)"
+  },
+  {
+    "title": "Tiempo de ejecución",
+    "desc": "Menos segundos significa una ejecución más rápida. Las barras incluyen la desviación estándar.",
+    "code": "fig, ax = plt.subplots(figsize=(10, 4.8))\nax.bar(resumen['configuracion'], resumen['tiempo_promedio'],\n       yerr=resumen['tiempo_std'], capsize=5, color='#6C63FF')\nax.set_ylabel('Tiempo promedio (s)')\nax.tick_params(axis='x', rotation=15)\nplt.tight_layout()\nplt.show()"
+  },
+  {
+    "title": "Aceleración real e ideal",
+    "desc": "Speedup = tiempo secuencial / tiempo paralelo.",
+    "code": "paralelos = resumen[resumen['configuracion'] != 'Secuencial']\nfig, ax = plt.subplots(figsize=(10, 4.8))\nax.plot(paralelos['procesos'], paralelos['speedup'], 'o-',\n        color='#6C63FF', linewidth=3, label='Medido')\nax.plot(paralelos['procesos'], paralelos['procesos'], '--',\n        color='#FF6584', label='Ideal lineal')\nax.set(xlabel='Procesos', ylabel='Speedup', xticks=[1,2,4,8])\nax.legend()\nplt.tight_layout()\nplt.show()"
+  },
+  {
+    "title": "Eficiencia por proceso",
+    "desc": "Eficiencia = speedup / procesos. Terminar antes no implica mantener la misma eficiencia.",
+    "code": "fig, ax = plt.subplots(figsize=(10, 4.8))\nax.bar(paralelos['procesos'].astype(str),\n       paralelos['eficiencia'] * 100, color='#2CB67D')\nax.axhline(100, linestyle='--', color='#FF6584', label='Ideal 100 %')\nax.set(xlabel='Procesos', ylabel='Eficiencia (%)')\nax.legend()\nplt.tight_layout()\nplt.show()"
+  },
+  {
+    "title": "Interpretar esta corrida",
+    "desc": "La conclusión depende de los resultados, no de una aceleración prometida.",
+    "code": "mejor = resumen.loc[resumen['tiempo_promedio'].idxmin()]\nprint(f\"Menor tiempo: {mejor['configuracion']}\")\nprint(f\"Promedio: {mejor['tiempo_promedio']:.4f} s\")\nprint(f\"Speedup: {mejor['speedup']:.2f}×\")\nprint(f\"Eficiencia: {mejor['eficiencia']:.1%}\")\nprint(\"\\nMás procesos no garantizan mejor rendimiento.\")\nprint(\"Esta sesión demuestra paralelismo en un solo equipo.\")\nprint(\"Un clúster añade comunicación y coordinación entre nodos.\")"
+  }
+]

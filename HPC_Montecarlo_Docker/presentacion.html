@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>HPC vs Computación Tradicional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,700;1,700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --navy: #0F3460; --purple: #6C63FF; --pink: #FF6584;
+    --yellow: #FFC93C; --mint: #2CB67D; --cream: #FFF9F0;
+    --white: #FFFFFF; --gray: #6B7280; --ink: #16162A;
+    --line: rgba(22, 22, 42, 0.08);
+  }
+
+  html, body {
+    width: 100%; height: 100%; margin: 0; padding: 0;
+    overflow: hidden; background: #08080f;
+    font-family: 'Poppins', sans-serif;
+  }
+  body { position: relative; }
+
+  .stage {
+    position: absolute; top: 50%; left: 50%;
+    width: 1280px; height: 720px;
+    transform-origin: center center;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .slide {
+    position: absolute; inset: 0;
+    overflow: hidden; border-radius: 14px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .45s ease;
+    box-shadow: 0 40px 120px rgba(0,0,0,.75);
+    display: flex; flex-direction: column;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; }
+
+  /* ========== ICONOS ========== */
+  .ico { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .ico-circle { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ico-circle.blue { background: rgba(108,99,255,.14); color: var(--purple); }
+  .ico-circle.pink { background: rgba(255,101,132,.14); color: var(--pink); }
+  .ico-circle.yellow { background: rgba(255,201,60,.2); color: #B8860B; }
+  .ico-circle.mint { background: rgba(44,182,125,.14); color: var(--mint); }
+  .ico-circle.navy { background: rgba(15,52,96,.12); color: var(--navy); }
+
+  /* ========== PORTADA ========== */
+  .slide-cover { background: linear-gradient(135deg, #1A1A2E 0%, #16213E 55%, #0F3460 100%); color: var(--white); }
+  .blob { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
+  .blob-1 { width: 520px; height: 520px; background: var(--purple); top: -180px; right: -120px; opacity: .5; }
+  .blob-2 { width: 420px; height: 420px; background: var(--pink); bottom: -160px; left: -120px; opacity: .35; }
+
+  .grid-pattern {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 80%);
+    mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 80%);
+  }
+
+  .cover-content {
+    position: relative; z-index: 2; height: 100%;
+    display: grid; grid-template-columns: 1.15fr .85fr;
+    align-items: center; padding: 55px 75px 45px 75px; gap: 45px;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 9px 18px; background: rgba(108,99,255,.15);
+    border: 1.5px solid rgba(108,99,255,.5); border-radius: 100px;
+    font-size: 14px; font-weight: 500; letter-spacing: .5px;
+    color: #B8B4FF; margin-bottom: 22px;
+  }
+  .badge::before { content: ''; width: 8px; height: 8px; background: var(--purple); border-radius: 50%; box-shadow: 0 0 12px var(--purple); }
+
+  .cover-title { font-family: 'Bebas Neue', sans-serif; line-height: .9; letter-spacing: 1px; margin-bottom: 20px; }
+  .title-line { display: block; font-size: 112px; background: linear-gradient(135deg, #FFFFFF 0%, #C9C6FF 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .title-vs { display: block; font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 42px; color: var(--yellow); margin: 2px 0; letter-spacing: 0; }
+  .title-line.alt { background: linear-gradient(135deg, #FF6584 0%, #FFC93C 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 74px; }
+
+  .cover-subtitle { font-size: 18px; font-weight: 300; color: rgba(255,255,255,.8); line-height: 1.5; max-width: 500px; margin-bottom: 22px; border-left: 3px solid var(--pink); padding-left: 16px; }
+  .cover-meta { display: flex; gap: 42px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.12); margin-bottom: 18px; }
+  .meta-item { display: flex; flex-direction: column; gap: 4px; }
+  .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2.5px; color: var(--purple); font-weight: 600; }
+  .meta-value { font-size: 15px; font-weight: 500; color: rgba(255,255,255,.92); }
+
+  .team { display: flex; flex-wrap: wrap; gap: 8px; }
+  .team-chip { font-size: 12px; padding: 6px 14px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 100px; color: rgba(255,255,255,.78); letter-spacing: .3px; }
+
+  .cover-image { position: relative; width: 100%; aspect-ratio: 4/5; border-radius: 22px; overflow: hidden; border: 2px solid rgba(255,255,255,.1); box-shadow: 0 30px 60px rgba(0,0,0,.5); }
+  .cover-image img { width: 100%; height: 100%; object-fit: cover; }
+  .cover-image::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(26,26,46,.9) 100%); }
+  .image-tag { position: absolute; bottom: 22px; left: 22px; right: 22px; z-index: 3; font-size: 13px; color: rgba(255,255,255,.85); }
+  .image-tag strong { display: block; font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1.5px; color: var(--yellow); margin-bottom: 2px; font-weight: 400; }
+
+  /* ========== CONTENIDO ========== */
+  .slide-content {
+    background: var(--cream); color: var(--ink);
+    padding: 42px 65px 38px 65px;
+  }
+
+  .content-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; flex-shrink: 0; }
+  .num-badge { font-family: 'Bebas Neue', sans-serif; font-size: 58px; line-height: 1; color: var(--pink); letter-spacing: 1px; }
+  .content-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 58px; letter-spacing: 1.5px; color: var(--ink); line-height: 1; font-weight: 400; }
+  .header-line { flex: 1; height: 3px; background: linear-gradient(90deg, var(--purple), transparent); border-radius: 3px; margin-left: 8px; }
+
+  .lead {
+    font-family: 'Playfair Display', serif; font-style: italic;
+    font-size: 23px; color: var(--navy); line-height: 1.4;
+    margin-bottom: 22px; max-width: 1010px; flex-shrink: 0;
+    padding-left: 22px; border-left: 4px solid var(--yellow);
+  }
+
+  .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; flex: 1; min-height: 0; }
+  .body-grid.single { grid-template-columns: 1fr; }
+
+  /* ========== TARJETAS ========== */
+  .concept-card {
+    background: var(--white); border-radius: 20px;
+    padding: 26px 28px; display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+    border: 1px solid rgba(0,0,0,.05);
+    box-shadow: 0 10px 30px rgba(26,26,46,.06);
+  }
+  .concept-card::before { content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%; }
+  .card-blue::before { background: linear-gradient(180deg, var(--purple), var(--navy)); }
+  .card-pink::before { background: linear-gradient(180deg, var(--pink), var(--yellow)); }
+
+  .card-tag {
+    align-self: flex-start; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 2.5px; font-weight: 600; padding: 6px 14px;
+    border-radius: 100px; margin-bottom: 12px;
+  }
+  .card-blue .card-tag { background: rgba(108,99,255,.12); color: var(--purple); }
+  .card-pink .card-tag { background: rgba(255,101,132,.14); color: var(--pink); }
+
+  .concept-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 46px; letter-spacing: 1.2px; line-height: 1; margin-bottom: 12px; font-weight: 400; }
+
+  .card-desc { font-size: 16.5px; line-height: 1.6; color: var(--gray); margin-bottom: 18px; }
+  .card-desc strong { color: var(--ink); font-weight: 600; }
+
+  .bullet-list { list-style: none; display: flex; flex-direction: column; gap: 14px; margin-top: auto; }
+  .bullet-list li { display: flex; align-items: center; gap: 14px; font-size: 16px; line-height: 1.4; color: var(--ink); }
+  .bullet-list strong { color: var(--ink); font-weight: 600; }
+
+  /* ========== TABLA ========== */
+  .comparison-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; flex: 1; }
+  .comparison-table th { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 1px; font-weight: 400; padding: 6px 24px; text-align: left; }
+  .comparison-table th.aspecto { width: 28%; color: var(--gray); }
+  .comparison-table th.trad { color: var(--navy); }
+  .comparison-table th.hpc { color: var(--pink); }
+
+  .comparison-table td {
+    background: var(--white); padding: 16px 24px;
+    font-size: 16.5px; color: var(--ink);
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .comparison-table td:first-child {
+    border-left: 1px solid var(--line); border-top-left-radius: 14px; border-bottom-left-radius: 14px;
+    font-weight: 500; color: var(--gray); font-size: 15.5px;
+  }
+  .comparison-table td:last-child { border-right: 1px solid var(--line); border-top-right-radius: 14px; border-bottom-right-radius: 14px; }
+  .comparison-table tr td:nth-child(2) { color: var(--navy); font-weight: 500; }
+  .comparison-table tr td:nth-child(3) { color: var(--pink); font-weight: 500; }
+
+  .note-bar {
+    margin-top: 14px; padding: 16px 24px;
+    background: rgba(255,201,60,.15); border-left: 4px solid var(--yellow);
+    border-radius: 10px; font-size: 16px; color: var(--ink);
+    font-weight: 500; font-style: italic; line-height: 1.45;
+    flex-shrink: 0;
+  }
+
+  /* ========== DIAGRAMAS ========== */
+  .diagram-seq { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
+  .task-box {
+    flex: 1; height: 48px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 1px; color: var(--white);
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  }
+  .card-blue .task-box { background: linear-gradient(135deg, var(--purple), var(--navy)); }
+  .card-pink .task-box { background: linear-gradient(135deg, var(--pink), #FF8FAB); }
+  .arrow { font-size: 16px; color: var(--gray); opacity: .5; }
+
+  .diagram-par { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+  .lane { display: flex; align-items: center; gap: 9px; }
+  .lane .task-box { height: 38px; font-size: 17px; }
+  .lane::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--gray); opacity: .4; }
+
+  .time-bar { font-size: 14px; font-weight: 500; padding: 12px 16px; border-radius: 8px; text-align: center; letter-spacing: .3px; background: rgba(108,99,255,.08); color: var(--navy); }
+  .time-bar.highlight { background: rgba(255,101,132,.1); color: #C63A5C; }
+
+  .analogy { font-size: 14px; font-style: italic; color: var(--gray); padding-left: 12px; border-left: 2px solid var(--gray); opacity: .85; line-height: 1.4; margin-top: auto; }
+
+  /* ========== MÉTRICAS ========== */
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; margin-bottom: 16px; }
+  .metric-card {
+    background: var(--white); border-radius: 18px;
+    padding: 22px 24px; display: flex; gap: 18px; align-items: center;
+    border: 1px solid rgba(0,0,0,.05);
+    box-shadow: 0 8px 24px rgba(26,26,46,.05);
+  }
+  .metric-card h4 { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; font-weight: 400; line-height: 1; margin-bottom: 6px; }
+  .metric-card p { font-size: 15px; color: var(--gray); line-height: 1.4; }
+
+  .formula-bar {
+    background: linear-gradient(135deg, var(--navy), var(--purple));
+    color: var(--white); padding: 20px 28px; border-radius: 14px;
+    text-align: center; font-family: 'Bebas Neue', sans-serif;
+    font-size: 34px; letter-spacing: 1.5px;
+    box-shadow: 0 10px 26px rgba(108,99,255,.3);
+    flex-shrink: 0;
+  }
+  .formula-bar em { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; color: var(--yellow); padding: 0 6px; }
+
+  /* ========== NIVELES ========== */
+  .levels-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; flex: 1; margin-bottom: 14px; }
+  .level-card {
+    background: var(--white); border-radius: 18px;
+    padding: 22px 18px; display: flex; flex-direction: column;
+    align-items: center; text-align: center;
+    border: 1px solid rgba(0,0,0,.05);
+    box-shadow: 0 8px 24px rgba(26,26,46,.05);
+    position: relative;
+  }
+  .level-card::after { content: ''; position: absolute; right: -14px; top: 50%; width: 14px; height: 2px; background: var(--gray); opacity: .25; }
+  .level-card:last-child::after { display: none; }
+  .level-card .ico-circle { margin-bottom: 14px; width: 58px; height: 58px; border-radius: 16px; }
+  .level-card .ico-circle .ico { width: 28px; height: 28px; }
+  .level-card h4 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 1px; font-weight: 400; line-height: 1; margin-bottom: 8px; }
+  .level-card .sub { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--purple); font-weight: 600; margin-bottom: 10px; }
+  .level-card p { font-size: 14px; color: var(--gray); line-height: 1.5; }
+
+  /* ========== SPEEDUP ========== */
+  .speedup-layout { display: grid; grid-template-columns: 1.05fr 1fr; gap: 22px; flex: 1; min-height: 0; }
+  .speedup-formula-box {
+    background: linear-gradient(135deg, var(--navy), var(--purple));
+    color: var(--white); border-radius: 20px;
+    padding: 30px 32px; display: flex; flex-direction: column; justify-content: center;
+    box-shadow: 0 12px 32px rgba(108,99,255,.28);
+  }
+  .speedup-formula-box .label { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: rgba(255,255,255,.7); margin-bottom: 14px; font-weight: 600; }
+  .speedup-formula-box .formula { font-family: 'Bebas Neue', sans-serif; font-size: 44px; letter-spacing: 1.5px; line-height: 1.15; color: var(--white); }
+  .speedup-formula-box .formula em { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; color: var(--yellow); }
+  .speedup-formula-box .divider { height: 1px; background: rgba(255,255,255,.2); margin: 20px 0; }
+  .speedup-formula-box .sub-formula { font-size: 16px; color: rgba(255,255,255,.88); line-height: 1.6; }
+  .speedup-formula-box .sub-formula strong { color: var(--yellow); }
+
+  .speedup-example {
+    background: var(--white); border-radius: 20px;
+    padding: 26px 28px; display: flex; flex-direction: column; gap: 12px;
+    border: 1px solid rgba(0,0,0,.05);
+    box-shadow: 0 10px 32px rgba(26,26,46,.06);
+  }
+  .speedup-example h4 { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; font-weight: 400; margin-bottom: 4px; }
+  .example-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--cream); border-radius: 10px; font-size: 16.5px; }
+  .example-row .key { color: var(--gray); }
+  .example-row .val { font-weight: 600; color: var(--ink); }
+  .example-row.result { background: rgba(255,101,132,.1); color: #C63A5C; }
+  .example-row.result .val { color: #C63A5C; font-size: 19px; }
+
+  .warning-note {
+    margin-top: auto; padding: 14px 18px;
+    background: rgba(255,201,60,.15); border-left: 3px solid var(--yellow);
+    border-radius: 8px; font-size: 14.5px; color: var(--ink); font-style: italic;
+    line-height: 1.55;
+  }
+
+  /* ========== EJEMPLOS ========== */
+  .examples-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr 1fr; gap: 14px; flex: 1; }
+  .example-card {
+    background: var(--white); border-radius: 16px;
+    padding: 22px 18px; display: flex; flex-direction: column; align-items: flex-start;
+    border: 1px solid rgba(0,0,0,.05);
+    box-shadow: 0 6px 20px rgba(26,26,46,.05);
+  }
+  .example-card .ico-circle { margin-bottom: 12px; }
+  .example-card h4 { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; font-weight: 400; line-height: 1; margin-bottom: 8px; }
+  .example-card p { font-size: 13.5px; color: var(--gray); line-height: 1.5; }
+
+  /* ========== NO USAR HPC ========== */
+  .no-use-list { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .no-use-item {
+    background: var(--white); border-radius: 16px;
+    padding: 16px 26px; display: flex; align-items: center; gap: 22px;
+    border: 1px solid rgba(0,0,0,.05);
+    box-shadow: 0 6px 20px rgba(26,26,46,.05);
+    border-left: 5px solid var(--pink); flex: 1;
+  }
+  .no-use-item h4 { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; font-weight: 400; line-height: 1; min-width: 240px; }
+  .no-use-item p { font-size: 15.5px; color: var(--gray); line-height: 1.5; }
+
+  /* ========== CIERRE ========== */
+  .slide-closing {
+    background: linear-gradient(135deg, #1A1A2E 0%, #16213E 55%, #0F3460 100%);
+    color: var(--white);
+    padding: 50px 70px 40px 70px;
+    justify-content: space-between;
+  }
+  .slide-closing .blob-1 { top: -200px; right: -100px; }
+  .slide-closing .blob-2 { bottom: -180px; left: -100px; }
+
+  .closing-header {
+    display: flex; align-items: baseline; gap: 24px;
+    position: relative; z-index: 2;
+  }
+  .closing-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 96px; letter-spacing: 3px; line-height: 1;
+    background: linear-gradient(135deg, #FFFFFF 0%, #C9C6FF 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .closing-sub {
+    font-family: 'Playfair Display', serif;
+    font-style: italic; font-size: 30px; color: var(--yellow);
+  }
+
+  .closing-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 20px; position: relative; z-index: 2;
+  }
+  .closing-card {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 18px; padding: 24px 26px;
+  }
+  .closing-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 50px; line-height: 1; color: var(--pink);
+    margin-bottom: 12px; letter-spacing: 1px;
+  }
+  .closing-card p { font-size: 15px; line-height: 1.55; color: rgba(255,255,255,.9); }
+  .closing-card p strong { color: var(--yellow); font-weight: 600; }
+
+  .closing-footer {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    border-top: 1px solid rgba(255,255,255,.12);
+    padding-top: 22px; position: relative; z-index: 2;
+  }
+  .closing-footer .team { font-size: 14px; color: rgba(255,255,255,.7); letter-spacing: .3px; }
+  .closing-footer .team strong { display: block; color: var(--yellow); font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 7px; font-weight: 600; }
+  .closing-footer .refs { font-size: 13px; color: rgba(255,255,255,.6); text-align: right; line-height: 1.6; }
+  .closing-footer .refs strong { display: block; color: var(--yellow); font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 7px; font-weight: 600; }
+
+  /* ========== NAV ========== */
+  .nav {
+    position: fixed; bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(255,255,255,.1);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 8px 16px; border-radius: 100px; z-index: 100;
+  }
+  .nav button {
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: var(--purple); color: white; font-size: 17px; cursor: pointer;
+    transition: transform .2s, background .2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav button:hover { background: var(--pink); transform: scale(1.08); }
+  .nav span { color: rgba(255,255,255,.8); font-size: 12px; font-weight: 500; min-width: 48px; text-align: center; }
+/* Laboratorio integrado. Se conserva el escenario original de 1280 × 720. */
+.lab-slide {padding:32px 48px 62px;background:var(--cream);color:var(--ink);gap:12px;}
+.lab-heading {display:flex;align-items:center;gap:18px;flex-shrink:0;}
+.lab-heading h2 {font-family:'Bebas Neue',sans-serif;font-size:45px;font-weight:400;letter-spacing:1px;}
+.lab-heading .num-badge {font-size:48px;}
+.lab-status {margin-left:auto;border-radius:30px;padding:8px 15px;background:#eae8f3;color:var(--navy);font-size:14px;font-weight:600;}
+.lab-status[data-state="ok"] {background:#d7f2e5;color:#186345;}
+.lab-status[data-state="busy"] {background:#fff0bb;color:#805b00;}
+.lab-status[data-state="error"] {background:#ffe1e8;color:#9b2242;}
+.lab-path {display:flex;gap:5px;}
+.lab-path button {height:7px;flex:1;border:0;border-radius:5px;background:#ddd9e8;cursor:pointer;}
+.lab-path button.done {background:var(--mint);}
+.lab-path button.selected {background:var(--purple);}
+.lab-stephead {display:flex;align-items:center;gap:16px;}
+.lab-stephead h3 {font-size:24px;font-weight:600;}
+#lab-index {font-size:14px;color:var(--purple);font-weight:600;min-width:105px;}
+#lab-desc {font-size:16px;color:#535569;line-height:1.45;min-height:24px;}
+.lab-work {display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:0;}
+.lab-panel {border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-height:0;background:#fff;border:1px solid #e6e2ec;}
+.lab-panelbar {padding:10px 16px;border-bottom:1px solid #e6e2ec;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;min-height:42px;}
+.lab-codepanel {background:#18223d;color:#f0eef9;border-color:#18223d;}
+.lab-codepanel .lab-panelbar {border-color:#33415f;color:#d4d2ff;}
+#lab-code {width:100%;flex:1;min-height:0;background:transparent;color:#f0eef9;border:0;outline:0;padding:16px;resize:none;font:17px/1.65 'DejaVu Sans Mono',Consolas,monospace;tab-size:4;white-space:pre;}
+#lab-code:focus {box-shadow:inset 0 0 0 2px #a8a1ff;}
+#lab-output {padding:18px;flex:1;min-height:0;overflow:auto;font-size:20px;line-height:1.55;}
+#lab-output pre {font:18px/1.6 'DejaVu Sans Mono',monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 12px;}
+#lab-output img {display:block;max-width:100%;max-height:100%;object-fit:contain;margin:auto;cursor:zoom-in;}
+#lab-output table {border-collapse:collapse;font-size:17px;width:100%;}
+#lab-output th,#lab-output td {padding:10px;border-bottom:1px solid #e8e4ee;text-align:right;}
+#lab-output th {color:var(--navy);}
+#lab-output .error {color:#af234c;}
+.lab-placeholder {color:#73788a;font-size:20px;line-height:1.6;display:flex;align-items:center;height:100%;padding:12px;}
+.lab-actions {display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.lab-actions button,.lab-panelbar button {font:500 14px 'Poppins',sans-serif;border:1px solid #d8d3e3;border-radius:10px;padding:10px 14px;cursor:pointer;background:white;color:var(--navy);}
+.lab-actions .lab-run {background:var(--purple);color:white;border:0;font-weight:600;padding:12px 22px;font-size:16px;}
+.lab-actions button:disabled {opacity:.45;cursor:not-allowed;}
+.lab-actions #lab-hint {font-size:13px;color:#626779;flex:1;}
+.lab-actions button:focus-visible,.lab-panelbar button:focus-visible {outline:3px solid var(--pink);outline-offset:2px;}
+.lab-panelbar button {padding:3px 9px;font-size:12px;}
+.lab-work.focus-output {grid-template-columns:1fr;}
+.lab-work.focus-output .lab-codepanel {display:none;}
+.lab-work.focus-output #lab-output {padding:8px 24px;}
+.lab-work.focus-output #lab-output img {height:100%;max-height:100%;width:auto;}
+.lab-work.focus-output #lab-output table {font-size:21px;}
+@media(prefers-reduced-motion:reduce){.slide{transition:none;}}
+
+.nav {background:rgba(22,22,42,.94);border-color:rgba(255,255,255,.2);}
+
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- ===== 1: PORTADA ===== -->
+  <section class="slide slide-cover active">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="grid-pattern"></div>
+    <div class="cover-content">
+      <div>
+        <div class="badge">Cómputo de Alto Rendimiento</div>
+        <h1 class="cover-title">
+          <span class="title-line">HPC</span>
+          <span class="title-vs">versus</span>
+          <span class="title-line alt">COMPUTACIÓN<br>TRADICIONAL</span>
+        </h1>
+        <p class="cover-subtitle">Entendiendo por qué a veces una computadora no es suficiente.</p>
+        <div class="cover-meta">
+          <div class="meta-item"><span class="meta-label">Materia</span><span class="meta-value">Cómputo de Alto Rendimiento</span></div>
+          <div class="meta-item"><span class="meta-label">Cuatrimestre</span><span class="meta-value">7.0 · Primer Parcial</span></div>
+        </div>
+        <div class="team">
+          <span class="team-chip">Patricia Botello</span>
+          <span class="team-chip">Elliot González</span>
+          <span class="team-chip">Diego Almaraz</span>
+          <span class="team-chip">Ignacio Rodríguez</span>
+        </div>
+      </div>
+      <div class="cover-image">
+        <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=900&q=80" alt="Clúster HPC">
+        <div class="image-tag"><strong>HPC</strong>Miles de núcleos trabajando en paralelo</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2: ¿QUÉ ES HPC? ===== -->
+  <section class="slide slide-content">
+    <div class="content-header">
+      <span class="num-badge">01</span>
+      <h2>¿Qué es HPC?</h2>
+      <div class="header-line"></div>
+    </div>
+    <p class="lead">"Es como resolver un rompecabezas de 10,000 piezas: una persona tarda semanas, pero 100 personas en equipo lo terminan en un día."</p>
+    <div class="body-grid">
+      <div class="concept-card card-blue">
+        <span class="card-tag">Definición</span>
+        <h3>Alto Rendimiento</h3>
+        <p class="card-desc">Uso de <strong>muchas computadoras conectadas</strong> entre sí para resolver un problema grande en mucho menos tiempo del que tomaría una sola máquina. Cada equipo aporta una fracción del trabajo total.</p>
+        <ul class="bullet-list">
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></svg></div><span><strong>Clúster:</strong> grupo de computadoras trabajando juntas</span></li>
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><span><strong>Paralelismo:</strong> varias tareas al mismo tiempo</span></li>
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></div><span><strong>Objetivo:</strong> resolver en horas lo que tomaría meses</span></li>
+        </ul>
+      </div>
+      <div class="concept-card card-pink">
+        <span class="card-tag">En la práctica</span>
+        <h3>¿Cómo se ve?</h3>
+        <p class="card-desc">Físicamente es un cuarto lleno de servidores conectados por red de alta velocidad, trabajando como si fueran <strong>una sola supercomputadora</strong>.</p>
+        <ul class="bullet-list">
+          <li><div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></div><span>Cientos o miles de nodos conectados por red</span></li>
+          <li><div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/><circle cx="12" cy="12" r="3"/></svg></div><span>Se usa en ciencia, industria e inteligencia artificial</span></li>
+          <li><div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg></div><span>Sin HPC muchos problemas serían imposibles de resolver</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3: COMPUTACIÓN TRADICIONAL ===== -->
+  <section class="slide slide-content">
+    <div class="content-header">
+      <span class="num-badge">02</span>
+      <h2>Computación Tradicional</h2>
+      <div class="header-line"></div>
+    </div>
+    <p class="lead">"Es tu laptop. Hace todo ella sola, una cosa a la vez."</p>
+    <div class="body-grid">
+      <div class="concept-card card-blue">
+        <span class="card-tag">Modelo clásico</span>
+        <h3>Una Sola Máquina</h3>
+        <p class="card-desc">Una computadora personal con un procesador que ejecuta tareas de forma <strong>consecutiva</strong>. Es el modelo que usamos todos los días sin pensarlo.</p>
+        <ul class="bullet-list">
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3"/><path d="M15 2v3"/><path d="M9 19v3"/><path d="M15 19v3"/><path d="M2 9h3"/><path d="M2 15h3"/><path d="M19 9h3"/><path d="M19 15h3"/></svg></div><span>Un solo procesador principal</span></li>
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10"/><path d="M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg></div><span>Tareas una tras otra (secuencial)</span></li>
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></div><span>Ideal para uso diario: navegar, escribir, ver videos</span></li>
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg></div><span><strong>Limitación:</strong> no puede acelerar tareas gigantes por sí sola</span></li>
+        </ul>
+      </div>
+      <div class="concept-card card-pink" style="padding:0; overflow:hidden;">
+        <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=900&q=80" alt="Laptop" style="width:100%; height:100%; object-fit:cover;">
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4: DIFERENCIAS ===== -->
+  <section class="slide slide-content">
+    <div class="content-header">
+      <span class="num-badge">03</span>
+      <h2>Diferencias Clave</h2>
+      <div class="header-line"></div>
+    </div>
+    <p class="lead">"Dos mundos distintos, dos formas de resolver problemas."</p>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th class="aspecto">Aspecto</th>
+          <th class="trad">Computación Tradicional</th>
+          <th class="hpc">HPC</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Procesadores</td><td>1 a 8 núcleos en un solo chip</td><td>Miles de núcleos en múltiples nodos</td></tr>
+        <tr><td>Memoria</td><td>Gigabytes (GB)</td><td>Terabytes o Petabytes (TB/PB)</td></tr>
+        <tr><td>Ejecución</td><td>Una tarea a la vez</td><td>Muchas tareas en simultáneo</td></tr>
+        <tr><td>Propósito</td><td>Uso diario y ofimático</td><td>Ciencia, industria e investigación</td></tr>
+        <tr><td>Costo</td><td>500 - 2,000 USD por equipo</td><td>Millones de USD en infraestructura</td></tr>
+      </tbody>
+    </table>
+    <div class="note-bar">Un clúster no es más rápido por sí solo: hay que saber dividir el trabajo y aprovechar los recursos disponibles.</div>
+  </section>
+
+  <!-- ===== 5: SECUENCIAL VS PARALELO ===== -->
+  <section class="slide slide-content">
+    <div class="content-header">
+      <span class="num-badge">04</span>
+      <h2>Secuencial vs Paralelo</h2>
+      <div class="header-line"></div>
+    </div>
+    <p class="lead">"La diferencia está en cómo se reparte el trabajo entre los recursos disponibles."</p>
+    <div class="body-grid">
+      <div class="concept-card card-blue">
+        <span class="card-tag">Modelo tradicional</span>
+        <h3>Secuencial</h3>
+        <p class="card-desc">Cada instrucción se ejecuta <strong>una tras otra</strong> en un solo procesador. El problema se resuelve paso a paso sin aprovechar más núcleos.</p>
+        <div class="diagram-seq">
+          <div class="task-box">T1</div><div class="arrow">→</div>
+          <div class="task-box">T2</div><div class="arrow">→</div>
+          <div class="task-box">T3</div><div class="arrow">→</div>
+          <div class="task-box">T4</div>
+        </div>
+        <div class="time-bar">Tiempo total = T1 + T2 + T3 + T4</div>
+        <ul class="bullet-list" style="margin-top:16px;">
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg></div><span>Solo usa <strong>1 núcleo</strong> aunque tengas más disponibles</span></li>
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><span>No escala: agregar CPUs no reduce el tiempo</span></li>
+        </ul>
+        <div class="analogy">Como un cajero atendiendo una sola fila de clientes.</div>
+      </div>
+      <div class="concept-card card-pink">
+        <span class="card-tag">Modelo HPC</span>
+        <h3>Paralelo</h3>
+        <p class="card-desc">El problema se <strong>divide en partes independientes</strong> y cada núcleo resuelve una al mismo tiempo. Requiere sincronización final.</p>
+        <div class="diagram-par">
+          <div class="lane"><div class="task-box">T1</div></div>
+          <div class="lane"><div class="task-box">T2</div></div>
+          <div class="lane"><div class="task-box">T3</div></div>
+          <div class="lane"><div class="task-box">T4</div></div>
+        </div>
+        <div class="time-bar highlight">Tiempo total ≈ duración de la tarea más lenta</div>
+        <ul class="bullet-list" style="margin-top:16px;">
+          <li><div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></svg></div><span>Usa <strong>N núcleos</strong> simultáneamente</span></li>
+          <li><div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><span>Introduce overhead de coordinación y sincronización</span></li>
+        </ul>
+        <div class="analogy">Como 8 cajeros atendiendo 8 filas a la vez.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 6: CPU, NÚCLEOS ===== -->
+  <section class="slide slide-content">
+    <div class="content-header">
+      <span class="num-badge">05</span>
+      <h2>CPU, Núcleos, Procesos e Hilos</h2>
+      <div class="header-line"></div>
+    </div>
+    <p class="lead">"Piensa en un edificio de oficinas: cada nivel cumple una función distinta dentro del sistema."</p>
+    <div class="levels-row">
+      <div class="level-card">
+        <div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1.5"/><line x1="9" y1="8" x2="9" y2="8"/><line x1="15" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="9" y2="16"/><line x1="15" y1="16" x2="15" y2="16"/></svg></div>
+        <span class="sub">Nivel 1</span>
+        <h4>CPU</h4>
+        <p>El edificio completo. Es el cerebro que coordina todas las operaciones del sistema.</p>
+      </div>
+      <div class="level-card">
+        <div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M9 4v16"/></svg></div>
+        <span class="sub">Nivel 2</span>
+        <h4>Núcleo</h4>
+        <p>Cada oficina dentro del edificio. Aquí se realiza el trabajo real de cálculo.</p>
+      </div>
+      <div class="level-card">
+        <div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/></svg></div>
+        <span class="sub">Nivel 3</span>
+        <h4>Proceso</h4>
+        <p>Un empleado trabajando en su oficina con su propio espacio y recursos.</p>
+      </div>
+      <div class="level-card">
+        <div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3" y2="6"/><line x1="3" y1="12" x2="3" y2="12"/><line x1="3" y1="18" x2="3" y2="18"/></svg></div>
+        <span class="sub">Nivel 4</span>
+        <h4>Hilo</h4>
+        <p>Cada tarea específica que ejecuta un empleado dentro de su oficina.</p>
+      </div>
+    </div>
+    <div class="note-bar">Un CPU moderno tiene entre 4 y 16 núcleos. Un clúster HPC puede tener miles de núcleos trabajando juntos.</div>
+  </section>
+
+  <!-- ===== 7: RENDIMIENTO ===== -->
+  <section class="slide slide-content">
+    <div class="content-header">
+      <span class="num-badge">06</span>
+      <h2>Rendimiento Computacional</h2>
+      <div class="header-line"></div>
+    </div>
+    <p class="lead">"Medir el rendimiento es como medir un carro: no basta con la velocidad máxima, hay que ver el consumo y el desgaste."</p>
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div>
+        <div><h4>Tiempo de ejecución</h4><p>¿Cuánto tarda en terminar el trabajo completo?</p></div>
+      </div>
+      <div class="metric-card">
+        <div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><line x1="4" y1="20" x2="4" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="20" y1="20" x2="20" y2="4"/></svg></div>
+        <div><h4>Throughput</h4><p>¿Cuánto trabajo completa por unidad de tiempo?</p></div>
+      </div>
+      <div class="metric-card">
+        <div class="ico-circle yellow"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="4" y1="15" x2="20" y2="15"/></svg></div>
+        <div><h4>Uso de CPU y RAM</h4><p>¿Qué tantos recursos consume el programa?</p></div>
+      </div>
+      <div class="metric-card">
+        <div class="ico-circle mint"><svg class="ico" viewBox="0 0 24 24"><path d="M14.7 6.3a4.5 4.5 0 0 0-5.6 5.6L3 18v3h3l6.1-6.1a4.5 4.5 0 0 0 5.6-5.6L15 12l-3-3 2.7-2.7z"/></svg></div>
+        <div><h4>Overhead</h4><p>¿Cuánto tiempo se pierde coordinando procesos?</p></div>
+      </div>
+    </div>
+    <div class="formula-bar">Speedup <em>=</em> Tiempo secuencial <em>/</em> Tiempo paralelo</div>
+  </section>
+
+  <!-- ===== 8: ESCALABILIDAD ===== -->
+  <section class="slide slide-content">
+    <div class="content-header">
+      <span class="num-badge">07</span>
+      <h2>Escalabilidad</h2>
+      <div class="header-line"></div>
+    </div>
+    <p class="lead">"¿Qué pasa si agrego más trabajadores? ¿El trabajo se acaba antes o llega un punto donde ya no ayuda?"</p>
+    <div class="body-grid" style="margin-bottom: 14px;">
+      <div class="concept-card card-blue">
+        <span class="card-tag">Tipo 1</span>
+        <h3>Strong Scaling</h3>
+        <p class="card-desc"><strong>Mismo problema, más recursos.</strong> Se aumenta el número de procesadores mientras el tamaño del problema se mantiene fijo.</p>
+        <ul class="bullet-list">
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Mide qué tan bien se reparte el trabajo existente</span></li>
+          <li><div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Ideal: el tiempo se reduce proporcionalmente</span></li>
+        </ul>
+      </div>
+      <div class="concept-card card-pink">
+        <span class="card-tag">Tipo 2</span>
+        <h3>Weak Scaling</h3>
+        <p class="card-desc"><strong>Más recursos, problema más grande.</strong> Se aumentan procesadores y tamaño del problema de forma proporcional.</p>
+        <ul class="bullet-list">
+          <li><div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Mide si el rendimiento se mantiene al crecer ambos</span></li>
+          <li><div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Común en simulaciones científicas de gran escala</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="speedup-formula-box" style="display:grid; grid-template-columns: 1.1fr 1.4fr; gap:28px; align-items:center; padding:20px 30px;">
+      <div>
+        <span class="label">Ley de Amdahl</span>
+        <div class="formula" style="font-size:30px;">Speedup máx <em>=</em> 1 <em>/</em> (1 − P)</div>
+      </div>
+      <div class="sub-formula" style="font-size:14.5px;">
+        <strong>P</strong> = fracción paralelizable del programa. Si el 90% puede paralelizarse, el speedup máximo es <strong>10x</strong> sin importar cuántos procesadores agregues.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 9: SPEEDUP ===== -->
+  <section class="slide slide-content">
+    <div class="content-header">
+      <span class="num-badge">08</span>
+      <h2>Speedup</h2>
+      <div class="header-line"></div>
+    </div>
+    <div class="speedup-layout">
+      <div class="speedup-formula-box">
+        <span class="label">Fórmula</span>
+        <div class="formula">Speedup <em>=</em><br>Tiempo secuencial <em>/</em><br>Tiempo paralelo</div>
+        <div class="divider"></div>
+        <div class="sub-formula">
+          <strong>Eficiencia:</strong> E = Speedup / N procesadores<br>
+          Valor ideal = 1.0 (100%)<br>
+          Valores reales típicos: 0.7 a 0.9
+        </div>
+      </div>
+      <div class="speedup-example">
+        <h4>Ejemplo numérico</h4>
+        <div class="example-row"><span class="key">1 proceso tarda</span><span class="val">100 segundos</span></div>
+        <div class="example-row"><span class="key">4 procesos tardan</span><span class="val">25 segundos</span></div>
+        <div class="example-row result"><span class="key">Speedup obtenido</span><span class="val">4x</span></div>
+        <div class="warning-note">
+          El speedup casi nunca es perfecto. Agregar procesos introduce un costo (overhead) que crece con la coordinación entre ellos.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 10: EJEMPLOS HPC ===== -->
+  <section class="slide slide-content">
+    <div class="content-header">
+      <span class="num-badge">09</span>
+      <h2>Problemas que Requieren HPC</h2>
+      <div class="header-line"></div>
+    </div>
+    <div class="examples-grid">
+      <div class="example-card">
+        <div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.6-1.5A4 4 0 0 0 6.5 19z"/></svg></div>
+        <h4>Clima</h4><p>Pronóstico meteorológico y modelos climáticos globales</p>
+      </div>
+      <div class="example-card">
+        <div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><path d="M5 3c0 9 14 9 14 18"/><path d="M19 3c0 9-14 9-14 18"/><path d="M7 6h10"/><path d="M7 10h10"/><path d="M7 14h10"/><path d="M7 18h10"/></svg></div>
+        <h4>Genómica</h4><p>Secuenciación y alineamiento masivo de ADN</p>
+      </div>
+      <div class="example-card">
+        <div class="ico-circle yellow"><svg class="ico" viewBox="0 0 24 24"><polygon points="12 2 14.5 9.5 22 10 16 15 18 22 12 18 6 22 8 15 2 10 9.5 9.5 12 2"/></svg></div>
+        <h4>Astrofísica</h4><p>Simulaciones de galaxias, agujeros negros y N-body</p>
+      </div>
+      <div class="example-card">
+        <div class="ico-circle mint"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="4" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="20"/></svg></div>
+        <h4>Inteligencia Artificial</h4><p>Entrenar modelos masivos de lenguaje y visión</p>
+      </div>
+      <div class="example-card">
+        <div class="ico-circle navy"><svg class="ico" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></div>
+        <h4>CFD</h4><p>Aerodinámica y dinámica de fluidos computacional</p>
+      </div>
+      <div class="example-card">
+        <div class="ico-circle blue"><svg class="ico" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <h4>Finanzas</h4><p>Modelado de riesgos y simulaciones de Monte Carlo</p>
+      </div>
+      <div class="example-card">
+        <div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg></div>
+        <h4>Física nuclear</h4><p>Simulaciones de fusión y física de altas energías</p>
+      </div>
+      <div class="example-card">
+        <div class="ico-circle yellow"><svg class="ico" viewBox="0 0 24 24"><path d="M12 2v6"/><path d="M4 6a10 10 0 0 0 16 0"/><path d="M8 20h8"/><path d="M12 15v5"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h4>Satélites</h4><p>Procesar imágenes satelitales y sensores remotos</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 11: NO USAR HPC ===== -->
+  <section class="slide slide-content">
+    <div class="content-header">
+      <span class="num-badge">10</span>
+      <h2>¿Cuándo NO usar HPC?</h2>
+      <div class="header-line"></div>
+    </div>
+    <p class="lead">"No todo problema necesita un martillo más grande."</p>
+    <div class="no-use-list">
+      <div class="no-use-item">
+        <div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+        <h4>Cálculo serial</h4><p>El problema no se puede dividir en partes independientes: solo aprovecha un núcleo.</p>
+      </div>
+      <div class="no-use-item">
+        <div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></div>
+        <h4>Flujo dependiente</h4><p>Cada paso necesita el resultado del anterior: no se puede paralelizar la secuencia.</p>
+      </div>
+      <div class="no-use-item">
+        <div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h4v4"/><path d="M21 21l-3-3"/></svg></div>
+        <h4>Software no paralelizable</h4><p>El programa está diseñado para un solo núcleo y no se puede modificar fácilmente.</p>
+      </div>
+      <div class="no-use-item">
+        <div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg></div>
+        <h4>Datos manejables</h4><p>El volumen de datos se procesa bien con una computadora personal: no hace falta más.</p>
+      </div>
+      <div class="no-use-item">
+        <div class="ico-circle pink"><svg class="ico" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <h4>Costo energético</h4><p>Un clúster consume energía como una ciudad pequeña. Solo se justifica si el beneficio lo compensa.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide lab-slide" id="laboratorio" aria-label="Laboratorio Monte Carlo">
+    <div class="lab-heading"><span class="num-badge">11</span><h2>Monte Carlo en vivo</h2><span class="lab-status" id="lab-status" role="status" aria-live="polite">Sin conexión</span></div>
+    <div class="lab-path" id="lab-path" aria-label="Pasos del laboratorio"></div>
+    <div class="lab-stephead"><span id="lab-index"></span><h3 id="lab-title"></h3></div>
+    <p id="lab-desc"></p>
+    <div class="lab-work" id="lab-work">
+      <div class="lab-panel lab-codepanel"><div class="lab-panelbar"><span>PYTHON · CELDA EDITABLE</span><span>Ctrl + Enter ejecuta</span></div><textarea id="lab-code" aria-label="Código Python de la celda" spellcheck="false"></textarea></div>
+      <div class="lab-panel"><div class="lab-panelbar"><span id="lab-output-label">RESULTADO DE ESTA SESIÓN</span><button id="lab-expand">Ampliar resultado</button></div><div id="lab-output" aria-live="polite"></div></div>
+    </div>
+    <div class="lab-actions"><button class="lab-run" id="lab-run">▶ Ejecutar</button><span id="lab-hint">Inicia el lanzador para conectar Python.</span><button id="lab-back">Anterior</button><button id="lab-next">Siguiente paso</button><button id="lab-reset" title="Borra variables y resultados de la sesión">Reiniciar sesión</button></div>
+  </section>
+
+  <!-- ===== 13: CIERRE ===== -->
+  <section class="slide slide-closing">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="closing-header">
+      <h1 class="closing-title">GRACIAS</h1>
+      <p class="closing-sub">¿Preguntas?</p>
+    </div>
+
+    <div class="closing-grid">
+      <div class="closing-card">
+        <div class="closing-num">01</div>
+        <p>HPC resuelve problemas grandes <strong>dividiéndolos</strong> entre muchos procesadores que trabajan al mismo tiempo.</p>
+      </div>
+      <div class="closing-card">
+        <div class="closing-num">02</div>
+        <p>No siempre es más rápido: <strong>depende del problema</strong> y de qué tan paralelizable sea su algoritmo.</p>
+      </div>
+      <div class="closing-card">
+        <div class="closing-num">03</div>
+        <p>La parte secuencial y el <strong>overhead</strong> pueden limitar el speedup. La mejora debe comprobarse con mediciones.</p>
+      </div>
+    </div>
+
+    <div class="closing-footer">
+      <div class="team">
+        <strong>Equipo</strong>
+        Patricia Botello · Elliot González · Diego Almaraz · Ignacio Rodríguez
+      </div>
+      <div class="refs">
+        <strong>Referencias</strong>
+        Oracle · PRACE Training · GDC ETH Zurich · bWHPC Wiki
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav">
+  <button onclick="prev()">←</button>
+  <span id="counter">1 / 12</span>
+  <button onclick="next()">→</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  let current = 0;
+
+  function update() {
+    slides.forEach((s, i) => s.classList.toggle('active', i === current));
+    counter.textContent = `${current + 1} / ${slides.length}`;
+  }
+  function next() { current = (current + 1) % slides.length; update(); }
+  function prev() { current = (current - 1 + slides.length) % slides.length; update(); }
+
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('textarea, input, select, button, [contenteditable]')) return;
+    if (current === 11) return;
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+
+  function fit() {
+    const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720) * 0.98;
+    document.querySelector('.stage').style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  window.addEventListener('resize', fit);
+  fit(); update();
+</script>
+<script id="lab-data" type="application/json">[{"title": "Preparar el entorno", "desc": "Una sesión de Python compartida para todo el experimento.", "code": "# Importaciones necesarias\nimport random\nimport time\nimport os\nimport sys\nimport json\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom concurrent.futures import ProcessPoolExecutor\n\n%matplotlib inline\nplt.style.use('seaborn-v0_8-darkgrid')\n\nRUTA_RESULTADOS = \"resultados\"\n\n# Crear la carpeta de resultados si no existe\nos.makedirs(RUTA_RESULTADOS, exist_ok=True)\n\n# Subcarpeta para gráficas individuales\nRUTA_GRAFICAS = os.path.join(RUTA_RESULTADOS, \"graficas\")\nos.makedirs(RUTA_GRAFICAS, exist_ok=True)\n\nprint(f\"Los resultados se guardarán en: {os.path.abspath(RUTA_RESULTADOS)}\")\n\nprint(f\"Python: {sys.version.split()[0]}\")\nprint(f\"CPU lógicas visibles: {os.cpu_count()}\")\nif hasattr(os, 'sched_getaffinity'):\n    print(f\"CPU permitidas por afinidad: {len(os.sched_getaffinity(0))}\")\nfrom pathlib import Path\nquota = Path('/sys/fs/cgroup/cpu.max')\nif quota.exists():\n    print(f\"Cuota cgroup (cuota / período): {quota.read_text().strip()}\")\nprint(\"Entorno listo. La cuota de Docker puede limitar los recursos efectivos.\")\nplt.rcParams.update({'figure.facecolor':'#FFF9F0', 'axes.facecolor':'#FFFFFF',\n    'axes.prop_cycle':plt.cycler(color=['#6C63FF','#FF6584','#2CB67D']), 'font.size':13})"}, {"title": "El azar aproxima π", "desc": "Lanzamos 1,000 puntos. La proporción dentro del círculo permite estimar π.", "code": "# Generar pocos puntos para visualizar el método\nn = 1000\ndentro_x, dentro_y = [], []\nfuera_x, fuera_y = [], []\n\nfor _ in range(n):\n    x = random.uniform(-1, 1)\n    y = random.uniform(-1, 1)\n    if x*x + y*y <= 1:\n        dentro_x.append(x)\n        dentro_y.append(y)\n    else:\n        fuera_x.append(x)\n        fuera_y.append(y)\n\npi_estimado = 4 * len(dentro_x) / n\nprint(f\"Con {n} puntos, π estimado = {pi_estimado:.4f}\")\n\nplt.figure(figsize=(6,4.6))\nplt.scatter(dentro_x, dentro_y, color='#6C63FF', s=5, label='Dentro')\nplt.scatter(fuera_x, fuera_y, color='#FF6584', s=5, label='Fuera')\ncirculo = plt.Circle((0,0), 1, fill=False, color='blue', linewidth=2)\nplt.gca().add_patch(circulo)\nplt.axis('equal')\nplt.title(f'Monte Carlo para π (n={n})')\nplt.legend()\nplt.show()"}, {"title": "Un solo proceso", "desc": "Definimos la referencia secuencial y probamos con un millón de puntos.", "code": "def montecarlo_secuencial(n_puntos):\n    \"\"\"\n    Estima π usando simulación Monte Carlo de forma secuencial.\n    \n    Parámetros:\n    n_puntos (int): Número total de puntos a generar.\n    \n    Retorna:\n    float: Estimación de π.\n    \"\"\"\n    dentro_circulo = 0\n    for _ in range(n_puntos):\n        x = random.uniform(-1, 1)\n        y = random.uniform(-1, 1)\n        if x*x + y*y <= 1:\n            dentro_circulo += 1\n    return 4 * dentro_circulo / n_puntos\n\nn_prueba = 1_000_000\ninicio = time.perf_counter()\npi_estimado = montecarlo_secuencial(n_prueba)\nfin = time.perf_counter()\n\nprint(f\"Con {n_prueba:,} puntos:\")\nprint(f\"π estimado = {pi_estimado:.6f}\")\nprint(f\"Tiempo = {fin - inicio:.4f} segundos\")\nprint(f\"Error absoluto = {abs(pi_estimado - 3.141592653589793):.6f}\")"}, {"title": "Varios procesos", "desc": "Cada trabajador cuenta su parte. El proceso principal reúne los conteos.", "code": "import montecarlo_worker as mw\n\ndef montecarlo_paralelo(n_puntos, n_procesos):\n    \"\"\"\n    Estima π usando simulación Monte Carlo con múltiples procesos.\n    \n    Parámetros:\n    n_puntos (int): Número total de puntos.\n    n_procesos (int): Número de procesos a utilizar.\n    \n    Retorna:\n    float: Estimación de π.\n    \"\"\"\n    # Dividir el trabajo en chunks\n    chunk_size = n_puntos // n_procesos\n    resto = n_puntos % n_procesos\n    chunks = [chunk_size] * n_procesos\n    for i in range(resto):\n        chunks[i] += 1\n    \n    # Ejecutar en paralelo\n    with ProcessPoolExecutor(max_workers=n_procesos) as executor:\n        resultados = list(executor.map(mw.contar_puntos_en_circulo, chunks))\n    \n    total_dentro = sum(resultados)\n    return 4 * total_dentro / n_puntos\n\nn_prueba = 1_000_000\nn_procesos = 4\ninicio = time.perf_counter()\npi_estimado = montecarlo_paralelo(n_prueba, n_procesos)\nfin = time.perf_counter()\n\nprint(f\"Con {n_prueba:,} puntos y {n_procesos} procesos:\")\nprint(f\"π estimado = {pi_estimado:.6f}\")\nprint(f\"Tiempo = {fin - inicio:.4f} segundos\")\nprint(f\"Error absoluto = {abs(pi_estimado - 3.141592653589793):.6f}\")"}, {"title": "Diseñar la comparación", "desc": "Puedes editar N_PUNTOS y REPETICIONES antes de ejecutar esta celda.", "code": "from laboratorio import medir\nN_PUNTOS = 10_000_000\nREPETICIONES = 3\nPROCESOS = [1, 2, 4, 8]\nassert isinstance(N_PUNTOS, int) and N_PUNTOS > 0\nassert isinstance(REPETICIONES, int) and REPETICIONES >= 2\nmuestras = {}\nprint(f\"{N_PUNTOS:,} puntos por corrida\")\nprint(f\"{REPETICIONES} repeticiones por configuración\")\nprint(\"Ejecutaremos cada configuración por separado.\")"}, {"title": "Medir la referencia", "desc": "El promedio secuencial será la base del speedup.", "code": "muestras['Secuencial'] = medir(\n    montecarlo_secuencial, N_PUNTOS, None, REPETICIONES\n)"}, {"title": "Medir con 1 proceso", "desc": "La medición incluye crear el pool, calcular y reunir los resultados.", "code": "muestras['Paralelo 1 proc'] = medir(\n    montecarlo_paralelo, N_PUNTOS, 1, REPETICIONES\n)"}, {"title": "Medir con 2 procesos", "desc": "La medición incluye crear el pool, calcular y reunir los resultados.", "code": "muestras['Paralelo 2 proc'] = medir(\n    montecarlo_paralelo, N_PUNTOS, 2, REPETICIONES\n)"}, {"title": "Medir con 4 procesos", "desc": "La medición incluye crear el pool, calcular y reunir los resultados.", "code": "muestras['Paralelo 4 proc'] = medir(\n    montecarlo_paralelo, N_PUNTOS, 4, REPETICIONES\n)"}, {"title": "Medir con 8 procesos", "desc": "La medición incluye crear el pool, calcular y reunir los resultados.", "code": "muestras['Paralelo 8 proc'] = medir(\n    montecarlo_paralelo, N_PUNTOS, 8, REPETICIONES\n)"}, {"title": "Comparar los resultados", "desc": "Tiempo promedio, dispersión, aceleración y eficiencia de esta sesión.", "code": "df_resultados = pd.DataFrame([\n    fila for grupo in muestras.values() for fila in grupo\n])\nresumen = df_resultados.groupby(['configuracion', 'procesos'], sort=False).agg(\n    tiempo_promedio=('tiempo', 'mean'),\n    tiempo_std=('tiempo', 'std'),\n    pi_promedio=('pi', 'mean')\n).reset_index()\ntiempo_secuencial = resumen.loc[\n    resumen['configuracion'] == 'Secuencial', 'tiempo_promedio'\n].iloc[0]\nresumen['speedup'] = tiempo_secuencial / resumen['tiempo_promedio']\nresumen['eficiencia'] = resumen['speedup'] / resumen['procesos']\ndisplay(resumen[['configuracion', 'tiempo_promedio', 'tiempo_std',\n                 'speedup', 'eficiencia']].round(4))\n# Copias en el directorio de resultados del contenedor.\ndf_resultados.to_csv('resultados/resultados_completos.csv', index=False)\nresumen.to_csv('resultados/resumen.csv', index=False)"}, {"title": "Tiempo de ejecución", "desc": "Menos segundos significa una ejecución más rápida. Las barras incluyen la desviación estándar.", "code": "fig, ax = plt.subplots(figsize=(10, 4.8))\nax.bar(resumen['configuracion'], resumen['tiempo_promedio'],\n       yerr=resumen['tiempo_std'], capsize=5, color='#6C63FF')\nax.set_ylabel('Tiempo promedio (s)')\nax.tick_params(axis='x', rotation=15)\nplt.tight_layout()\nplt.show()"}, {"title": "Aceleración real e ideal", "desc": "Speedup = tiempo secuencial / tiempo paralelo.", "code": "paralelos = resumen[resumen['configuracion'] != 'Secuencial']\nfig, ax = plt.subplots(figsize=(10, 4.8))\nax.plot(paralelos['procesos'], paralelos['speedup'], 'o-',\n        color='#6C63FF', linewidth=3, label='Medido')\nax.plot(paralelos['procesos'], paralelos['procesos'], '--',\n        color='#FF6584', label='Ideal lineal')\nax.set(xlabel='Procesos', ylabel='Speedup', xticks=[1,2,4,8])\nax.legend()\nplt.tight_layout()\nplt.show()"}, {"title": "Eficiencia por proceso", "desc": "Eficiencia = speedup / procesos. Terminar antes no implica mantener la misma eficiencia.", "code": "fig, ax = plt.subplots(figsize=(10, 4.8))\nax.bar(paralelos['procesos'].astype(str),\n       paralelos['eficiencia'] * 100, color='#2CB67D')\nax.axhline(100, linestyle='--', color='#FF6584', label='Ideal 100 %')\nax.set(xlabel='Procesos', ylabel='Eficiencia (%)')\nax.legend()\nplt.tight_layout()\nplt.show()"}, {"title": "Interpretar esta corrida", "desc": "La conclusión depende de los resultados, no de una aceleración prometida.", "code": "mejor = resumen.loc[resumen['tiempo_promedio'].idxmin()]\nprint(f\"Menor tiempo: {mejor['configuracion']}\")\nprint(f\"Promedio: {mejor['tiempo_promedio']:.4f} s\")\nprint(f\"Speedup: {mejor['speedup']:.2f}×\")\nprint(f\"Eficiencia: {mejor['eficiencia']:.1%}\")\nprint(\"\\nMás procesos no garantizan mejor rendimiento.\")\nprint(\"Esta sesión demuestra paralelismo en un solo equipo.\")\nprint(\"Un clúster añade comunicación y coordinación entre nodos.\")"}]</script>
+<script>(() => {
+  const steps=JSON.parse(document.getElementById('lab-data').textContent);
+  const $=id=>document.getElementById(id), code=$('lab-code'), out=$('lab-output');
+  let index=0,busy=false,connected=false,expanded=false;
+  let states=steps.map(s=>({code:s.code,html:'',done:false}));
+  const fragment=new URLSearchParams(location.hash.slice(1));
+  const token=fragment.get('token')||sessionStorage.getItem('hpc-lab-token')||'';
+  if(token) sessionStorage.setItem('hpc-lab-token',token);
+  if(fragment.has('token')) history.replaceState(null,'',location.pathname);
+  function status(text,state){$('lab-status').textContent=text;$('lab-status').dataset.state=state;}
+  function controls(){
+    const ready=index===0||states.slice(0,index).every(s=>s.done);
+    $('lab-run').disabled=busy||!connected||!ready;
+    $('lab-back').disabled=busy||index===0;
+    $('lab-next').disabled=busy;
+    $('lab-reset').disabled=busy||!connected;
+    code.disabled=busy;
+    $('lab-run').textContent=busy?'Ejecutando…':'▶ Ejecutar';
+    $('lab-hint').textContent=!connected?'Abre la dirección que muestra iniciar.py.':busy?'Python está calculando. Puedes ver las salidas en vivo.':!ready?'Ejecuta primero los pasos anteriores.':states[index].done?'Terminado. Puedes avanzar o repetir.':'Listo para ejecutar esta celda.';
+    [...$('lab-path').children].forEach((b,i)=>{b.className=(states[i].done?'done ':'')+(i===index?'selected':'');b.disabled=busy;});
+  }
+  function render(){
+    const s=steps[index];code.value=states[index].code;
+    $('lab-index').textContent=`PASO ${index+1} / ${steps.length}`;
+    $('lab-title').textContent=s.title;$('lab-desc').textContent=s.desc;
+    out.innerHTML=states[index].html||'<div class="lab-placeholder">Ejecuta la celda para mostrar sus resultados aquí.</div>';
+    $('lab-next').textContent=index===steps.length-1?'Ir al cierre':'Siguiente paso';
+    controls();
+  }
+  function invalidate(from){for(let i=from;i<states.length;i++){states[i].done=false;states[i].html='';}}
+  function go(i){if(busy)return;states[index].code=code.value;index=i;render();}
+  for(let i=0;i<steps.length;i++){
+    const b=document.createElement('button');b.title=`${i+1}. ${steps[i].title}`;b.setAttribute('aria-label',b.title);b.onclick=()=>go(i);$('lab-path').append(b);
+  }
+  code.addEventListener('input',()=>{states[index].code=code.value;invalidate(index);controls();});
+  code.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();if(!$('lab-run').disabled)run();}});
+  function pre(text,error=false){const el=document.createElement('pre');el.textContent=text;if(error)el.className='error';out.append(el);}
+  function event(ev){
+    const c=ev.content||{};
+    if(ev.type==='stream')pre(c.text);
+    if(ev.type==='error')pre((c.ename?c.ename+': ':'')+(c.evalue||'Error de ejecución'),true);
+    if(ev.type==='clear_output')out.innerHTML='';
+    if(ev.type==='display_data'||ev.type==='execute_result'){
+      const d=c.data||{};
+      if(d['image/png']){const img=document.createElement('img');img.src='data:image/png;base64,'+d['image/png'];img.alt=steps[index].title;out.append(img);}
+      else if(d['text/html']){
+        // Admite tablas de pandas. Elimina contenido activo de las salidas HTML.
+        const doc=new DOMParser().parseFromString(d['text/html'],'text/html');
+        doc.querySelectorAll('script,style,iframe,object,embed,link,meta,form,input,button,img,svg').forEach(e=>e.remove());
+        doc.body.querySelectorAll('*').forEach(e=>[...e.attributes].forEach(a=>{if(!['class','colspan','rowspan'].includes(a.name))e.removeAttribute(a.name);}));
+        const div=document.createElement('div');div.append(...doc.body.childNodes);out.append(div);
+      }else if(d['text/plain'])pre(d['text/plain']);
+    }
+    out.scrollTop=out.scrollHeight;
+  }
+  async function send(request,onEvent){
+    const response=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json','X-Lab-Token':token},body:JSON.stringify(request)});
+    if(!response.ok)throw Error(`No se pudo ejecutar (HTTP ${response.status}). Revisa el lanzador.`);
+    const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',doneEvent=null;
+    for(;;){const {value,done}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});let at;
+      while((at=buffer.indexOf('\n'))!==-1){const line=buffer.slice(0,at);buffer=buffer.slice(at+1);if(!line.trim())continue;const ev=JSON.parse(line);if(ev.type==='done')doneEvent=ev;else onEvent(ev);}}
+    if(!doneEvent)throw Error('La conexión terminó antes de recibir el resultado. Revisa el lanzador.');
+    return doneEvent.ok;
+  }
+  async function run(){
+    if(busy||$('lab-run').disabled)return;
+    states[index].code=code.value;invalidate(index);busy=true;out.innerHTML='';status('Ejecutando','busy');controls();
+    try{const ok=await send({action:'execute',code:code.value},event);states[index].done=ok;
+      if(!out.children.length)pre(ok?'Celda ejecutada.':'La celda terminó con un error.');
+      status(ok?'Terminado':'Error en la celda',ok?'ok':'error');
+    }catch(e){pre(e.message,true);status('Error de conexión','error');connected=false;}
+    finally{states[index].html=out.innerHTML;busy=false;controls();}
+  }
+  $('lab-run').onclick=run;
+  $('lab-back').onclick=()=>go(index-1);
+  $('lab-next').onclick=()=>index===steps.length-1?next():go(index+1);
+  $('lab-expand').onclick=()=>{expanded=!expanded;$('lab-work').classList.toggle('focus-output',expanded);$('lab-expand').textContent=expanded?'Mostrar código':'Ampliar resultado';};
+  out.onclick=e=>{if(e.target.tagName==='IMG')$('lab-expand').click();};
+  $('lab-reset').onclick=async()=>{
+    if(!confirm('¿Borrar las variables y los resultados? Se conservarán tus ediciones de código.'))return;
+    busy=true;controls();status('Reiniciando','busy');
+    try{const ok=await send({action:'reset'},()=>{});if(!ok)throw Error('No se pudo reiniciar el kernel.');invalidate(0);index=0;status('Conectado','ok');}
+    catch(e){status('Error','error');pre(e.message,true);}
+    finally{busy=false;render();}
+  };
+  async function check(){
+    if(busy)return;
+    try{if(location.protocol==='file:')throw Error('archivo');const r=await fetch('/api/status?token='+encodeURIComponent(token));connected=r.ok&&(await r.json()).connected;
+      if(connected&&$('lab-status').dataset.state!=='error'&&!states[index].done)status('Conectado','ok');
+      if(!connected)status('Sin conexión','error');
+    }catch{connected=false;status('Sin conexión','error');}
+    controls();
+  }
+  render();check();setInterval(check,5000);
+})();
+</script>
+</body>
+</html>

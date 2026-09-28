@@ -13,6 +13,10 @@ Este proyecto compara el rendimiento de una implementación **secuencial** y una
 
 El objetivo es demostrar experimentalmente cómo la paralelización reduce el tiempo de ejecución, pero también cómo el **speedup** no es lineal debido al overhead y a la **Ley de Amdahl**.
 
+## Presentación con laboratorio en vivo
+
+La versión interactiva para Docker o Python local está en [HPC_Montecarlo_Docker](HPC_Montecarlo_Docker/). Consulta su [guía de inicio](HPC_Montecarlo_Docker/LEEME.md) para ejecutarla.
+
 ## Objetivo
 - Comprender los conceptos de HPC, speedup, eficiencia y escalabilidad.
 - Implementar una solución secuencial y una paralela.
